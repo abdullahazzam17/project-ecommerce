@@ -15,7 +15,13 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("ERROR: DATABASE_URL tidak ditemukan di file .env! Cek kembali file .env kamu.")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,         # 10 koneksi tetap — cukup untuk banjir tanpa membuat koneksi baru di tengah jalan
+    max_overflow=0,       # TANPA overflow: tidak ada lonjakan pembuatan koneksi yang menghambat Supavisor
+    pool_pre_ping=True,   # deteksi koneksi mati otomatis (anti error 500 saat banjir)
+    pool_recycle=1800,    # daur ulang tiap 30 menit — hindari pembuatan ulang massal saat lalu lintas ramai
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

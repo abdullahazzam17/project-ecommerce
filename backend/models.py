@@ -38,3 +38,14 @@ class User(Base):
     phone = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
 
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(String, index=True)  # referensi ke orders.order_id
+    product_id = Column(Integer)
+    product_name = Column(String)
+    size = Column(String, default="L")
+    quantity = Column(Integer)
+    price_at_purchase = Column(Integer)  # harga terkunci saat checkout
+

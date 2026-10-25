@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from dotenv import load_dotenv
 from passlib.context import CryptContext
@@ -21,7 +21,26 @@ load_dotenv()
 # Auto-create tabel di Supabase
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Zoom Custom E-Commerce API")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-warm pool DB: buka 5 koneksi SATU PER SATU lalu kembalikan ke pool.
+    # Tanpa ini, request pertama yang datang bersamaan memaksa pool membuat
+    # banyak koneksi sekaligus -> Supavisor (session mode) menghambat/menolak
+    # pembuatan massal -> semua request menunggu 30 detik lalu timeout.
+    conns = []
+    for _ in range(10):  # = pool_size penuh: 10 koneksi dibuka BERURUTAN
+        try:
+            conns.append(engine.connect())
+        except Exception as e:
+            print("Pre-warm pool terputus (lanjut tanpa pre-warm penuh):", e)
+            break
+    for conn in conns:
+        conn.close()
+    yield
+
+app = FastAPI(title="Zoom Custom E-Commerce API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -80,10 +99,13 @@ class ProductResponse(ProductBase):
     class Config:
         from_attributes = True
 
-class OrderRequest(BaseModel):
+class OrderItemRequest(BaseModel):
     product_id: int
-    quantity: int
+    quantity: int = Field(ge=1, le=999)  # validasi: minimal 1, maksimal 999
     size: str = "L"
+
+class OrderRequest(BaseModel):
+    items: List[OrderItemRequest]  # MULTI-ITEM: isi keranjang dikirim utuh
     customer_name: str
     customer_email: str
     customer_phone: str
@@ -169,24 +191,49 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
 def read_products(db: Session = Depends(get_db)):
     return db.query(models.Product).all()
 
-# --- CHECKOUT MIDTRANS ---
+# --- CHECKOUT MIDTRANS (MULTI-ITEM) ---
 @app.post("/api/checkout")
 def create_transaction(order: OrderRequest, db: Session = Depends(get_db)):
-    product = db.query(models.Product).filter(models.Product.id == order.product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
-    
-    product_subtotal = product.price * order.quantity
+    if not order.items:
+        raise HTTPException(status_code=400, detail="Keranjang kosong")
+
+    # Ambil semua produk sekaligus & validasi stok per item
+    product_ids = [i.product_id for i in order.items]
+    products = {p.id: p for p in db.query(models.Product).filter(models.Product.id.in_(product_ids)).all()}
+
+    item_details = []
+    total_qty = 0
+    gross_amount = 0
+    for item in order.items:
+        product = products.get(item.product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Produk ID {item.product_id} tidak ditemukan")
+        if item.quantity > product.stock:
+            raise HTTPException(status_code=400, detail=f"Stok '{product.name}' tinggal {product.stock}")
+        if product.is_coming_soon:
+            raise HTTPException(status_code=400, detail=f"'{product.name}' belum bisa dibeli (Coming Soon)")
+
+        subtotal = product.price * item.quantity
+        gross_amount += subtotal
+        total_qty += item.quantity
+        item_details.append({
+            "id": str(product.id),
+            "price": product.price,
+            "quantity": item.quantity,
+            "name": product.name[:50],
+        })
+
     admin_fee = 4000
-    gross_amount = product_subtotal + admin_fee
+    gross_amount += admin_fee
+    item_details.append({"id": "ADMIN-FEE", "price": admin_fee, "quantity": 1, "name": "Biaya Penanganan / Sistem"})
 
     order_id = f"ZOOM-{uuid.uuid4().hex[:8].upper()}"
 
     new_order = models.Order(
         order_id=order_id,
-        product_id=product.id,
-        quantity=order.quantity,
-        size=order.size,
+        product_id=order.items[0].product_id,      # kompatibilitas kolom lama: item pertama
+        quantity=total_qty,                        # total seluruh item
+        size=order.items[0].size if len(order.items) == 1 else "MIX",
         total_amount=gross_amount,
         customer_name=order.customer_name,
         customer_email=order.customer_email,
@@ -194,6 +241,18 @@ def create_transaction(order: OrderRequest, db: Session = Depends(get_db)):
         status="PENDING"
     )
     db.add(new_order)
+
+    # Rincian per item — dipakai juga untuk pengurangan stok saat PAID
+    for item in order.items:
+        product = products[item.product_id]
+        db.add(models.OrderItem(
+            order_id=order_id,
+            product_id=product.id,
+            product_name=product.name,
+            size=item.size,
+            quantity=item.quantity,
+            price_at_purchase=product.price,
+        ))
     db.commit()
 
     param = {
@@ -201,20 +260,7 @@ def create_transaction(order: OrderRequest, db: Session = Depends(get_db)):
             "order_id": order_id,
             "gross_amount": gross_amount
         },
-        "item_details": [
-            {
-                "id": str(product.id),
-                "price": product.price,
-                "quantity": order.quantity,
-                "name": product.name
-            },
-            {
-                "id": "ADMIN-FEE",
-                "price": admin_fee,
-                "quantity": 1,
-                "name": "Biaya Penanganan / Sistem"
-            }
-        ],
+        "item_details": item_details,
         "customer_details": {
             "first_name": order.customer_name,
             "email": order.customer_email,
@@ -261,6 +307,12 @@ async def midtrans_webhook(request: Request, db: Session = Depends(get_db)):
         if fraud_status == 'accept' or transaction_status == 'settlement':
             if db_order:
                 db_order.status = "PAID"
+                # Stok baru benar-benar berkurang HANYA saat pembayaran lunas
+                order_items = db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).all()
+                for oi in order_items:
+                    product = db.query(models.Product).filter(models.Product.id == oi.product_id).first()
+                    if product:
+                        product.stock = max(0, product.stock - oi.quantity)
     elif transaction_status in ['cancel', 'deny', 'expire']:
         if db_order:
             db_order.status = "EXPIRED"
