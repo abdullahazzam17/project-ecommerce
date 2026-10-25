@@ -1,9 +1,11 @@
 import os
 import uuid
+import secrets
 import midtransclient
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel
@@ -23,7 +25,12 @@ app = FastAPI(title="Zoom Custom E-Commerce API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    # Whitelist origin eksplisit (standar keamanan) — bukan "*"
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.0.1:3000",  # akses demo via LAN (HP)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +50,20 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+# --- ADMIN AUTH (TOKEN SERVER-SIDE, DIVERIFIKASI PER REQUEST) ---
+# Token admin disimpan di .env (tidak pernah di-commit). Jika env kosong,
+# token acak digenerate per restart sehingga tidak bisa ditebak.
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN") or secrets.token_hex(32)
+
+def verify_admin(request: Request) -> None:
+    """Dependency: tolak request admin tanpa token yang sah (401)."""
+    scheme, param = get_authorization_scheme_param(request.headers.get("Authorization", ""))
+    if scheme.lower() != "bearer" or not secrets.compare_digest(param, ADMIN_TOKEN):
+        raise HTTPException(
+            status_code=401,
+            detail="Akses admin ditolak: token tidak valid atau tidak ada."
+        )
 
 # --- SCHEMAS ---
 class ProductBase(BaseModel):
@@ -117,7 +138,7 @@ def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
     return {
         "status": "success",
         "message": "Pendaftaran berhasil!",
-        "token": f"user-token-{new_user.id}",
+        "token": secrets.token_hex(16),  # token acak, bukan pola yang bisa ditebak
         "user": user_payload
     }
 
@@ -139,7 +160,7 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     return {
         "status": "success",
         "message": "Login berhasil!",
-        "token": f"user-token-{user.id}",
+        "token": secrets.token_hex(16),  # token acak, bukan pola yang bisa ditebak
         "user": user_payload
     }
 
@@ -214,10 +235,25 @@ def create_transaction(order: OrderRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/midtrans-webhook")
 async def midtrans_webhook(request: Request, db: Session = Depends(get_db)):
-    notification = await request.json()
+    # Body bengkok / bukan JSON -> 400 (bukan crash 500)
+    try:
+        notification = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Body bukan JSON valid")
+
     order_id = notification.get("order_id")
-    transaction_status = notification.get("transaction_status")
-    fraud_status = notification.get("fraud_status")
+    if not order_id:
+        raise HTTPException(status_code=400, detail="order_id wajib ada")
+
+    # JANGAN percaya isi body dari caller. Status kebenaran diambil
+    # langsung dari Midtrans (standar keamanan payment gateway).
+    try:
+        status_data = snap.transactions.status(order_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Transaksi tidak ditemukan di Midtrans")
+
+    transaction_status = status_data.get("transaction_status")
+    fraud_status = status_data.get("fraud_status")
 
     db_order = db.query(models.Order).filter(models.Order.order_id == order_id).first()
 
@@ -240,25 +276,28 @@ async def midtrans_webhook(request: Request, db: Session = Depends(get_db)):
 # --- ADMIN ENDPOINTS ---
 @app.post("/api/admin/login")
 def admin_login(data: AdminLogin):
-    if data.username == "admin" and data.password == "zoom123":
-        return {"status": "success", "token": "admin-super-secret-token"}
+    # Kredensial dari environment (bukan lagi hardcode di source)
+    admin_user = os.getenv("ADMIN_USERNAME", "admin")
+    admin_pass = os.getenv("ADMIN_PASSWORD", "")
+    if data.username == admin_user and admin_pass and secrets.compare_digest(data.password, admin_pass):
+        return {"status": "success", "token": ADMIN_TOKEN}
     return {"status": "error", "message": "Username atau password salah!"}
 
 @app.post("/api/products", response_model=ProductResponse)
-def create_product(product: ProductBase, db: Session = Depends(get_db)):
-    db_product = models.Product(**product.dict())
+def create_product(product: ProductBase, db: Session = Depends(get_db), _=Depends(verify_admin)):
+    db_product = models.Product(**product.model_dump())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     return db_product
 
 @app.put("/api/products/{product_id}", response_model=ProductResponse)
-def update_product(product_id: int, product: ProductBase, db: Session = Depends(get_db)):
+def update_product(product_id: int, product: ProductBase, db: Session = Depends(get_db), _=Depends(verify_admin)):
     db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
     
-    for key, value in product.dict().items():
+    for key, value in product.model_dump().items():
         setattr(db_product, key, value)
         
     db.commit()
@@ -266,7 +305,7 @@ def update_product(product_id: int, product: ProductBase, db: Session = Depends(
     return db_product
 
 @app.delete("/api/products/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(product_id: int, db: Session = Depends(get_db), _=Depends(verify_admin)):
     db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
@@ -275,8 +314,8 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     return {"status": "success", "message": f"Produk ID {product_id} berhasil dihapus"}
 
 @app.get("/api/admin/orders")
-def get_admin_orders(range: str = Query("1_month"), db: Session = Depends(get_db)):
-    now = datetime.utcnow()
+def get_admin_orders(range: str = Query("1_month"), db: Session = Depends(get_db), _=Depends(verify_admin)):
+    now = datetime.now(timezone.utc)
     query = db.query(models.Order)
 
     if range == "today":
@@ -299,8 +338,8 @@ def get_admin_orders(range: str = Query("1_month"), db: Session = Depends(get_db
     return orders
 
 @app.get("/api/admin/analytics")
-def get_admin_analytics(db: Session = Depends(get_db)):
-    now = datetime.utcnow()
+def get_admin_analytics(db: Session = Depends(get_db), _=Depends(verify_admin)):
+    now = datetime.now(timezone.utc)
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     total_orders = db.query(models.Order).filter(models.Order.created_at >= start_of_month).count()
