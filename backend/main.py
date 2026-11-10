@@ -12,10 +12,12 @@ import midtransclient
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security.utils import get_authorization_scheme_param
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 import models
@@ -79,6 +81,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(SQLAlchemyError)
+async def handle_database_error(request: Request, exc: SQLAlchemyError):
+    # 503 (bukan 500 mentah) agar response tetap melewati middleware CORS.
+    print("DB error:", type(exc).__name__, str(exc)[:160])
+    return JSONResponse(status_code=503, content={"detail": "Database tidak terjangkau"})
 
 snap = midtransclient.Snap(
     is_production=False,

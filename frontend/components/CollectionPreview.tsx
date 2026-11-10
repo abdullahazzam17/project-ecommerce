@@ -80,7 +80,7 @@ export default function CollectionPreview({
           <div role="alert" className="mt-8 border border-line bg-canvas p-6">
             <p className="text-sm font-bold">Products could not be loaded.</p>
             <p className="mt-1 text-sm text-muted">
-              The store service is not reachable. Check NEXT_PUBLIC_API_URL for this deployment, then try again.
+              The store service or database is unavailable. Check NEXT_PUBLIC_API_URL and the API health endpoint, then try again.
             </p>
             <button
               type="button"

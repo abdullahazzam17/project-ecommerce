@@ -76,7 +76,7 @@ export default function Home() {
       setProductsError(false);
       setLoading(true);
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 6000);
+      const timeoutId = window.setTimeout(() => controller.abort(), 10000);
 
       let res: Response;
       try {
@@ -85,7 +85,11 @@ export default function Home() {
         window.clearTimeout(timeoutId);
       }
 
-      if (!res.ok) throw new Error("Gagal fetch data produk");
+      if (!res.ok) {
+        setProductsError(true);
+        setProducts([]);
+        return;
+      }
 
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -99,7 +103,11 @@ export default function Home() {
         setProducts([]);
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        console.warn("Fetch products timed out");
+      } else {
+        console.error("Fetch error:", err);
+      }
       setProductsError(true);
       setProducts([]);
     } finally {
