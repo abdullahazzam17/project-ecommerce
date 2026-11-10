@@ -1,5 +1,7 @@
 "use client";
 
+import SectionLabel from "./SectionLabel";
+
 interface FooterProps {
   onHome: () => void;
   onShop: () => void;
@@ -58,9 +60,7 @@ export default function Footer({ onHome, onShop, onLookbook }: FooterProps) {
           </nav>
 
           <div className="text-sm text-inverse/60 md:col-span-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-inverse/50">
-              Campaign 01
-            </p>
+            <SectionLabel index="07" label="Footer" tone="dark" />
             <p className="mt-2">Street series</p>
             <p className="mt-1">2026</p>
           </div>

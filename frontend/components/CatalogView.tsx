@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Product } from "../lib/types";
+import SectionLabel from "./SectionLabel";
 
 type SortKey = "featured" | "price-asc" | "price-desc" | "name";
 
@@ -64,13 +65,10 @@ export default function CatalogView({
   return (
     <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-[20px] py-10 md:px-12 md:py-14">
       <div className="border-b border-line pb-5">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
-          <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
-          Catalog
-        </p>
+        <SectionLabel label="Catalog" />
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="break-words text-[clamp(2rem,5vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.03em]">
+            <h2 className="break-words text-[clamp(2rem,4.5vw,4rem)] font-black uppercase leading-[0.9] tracking-[-0.03em]">
               {title}
             </h2>
             <p className="mt-2 text-sm text-muted" aria-live="polite">

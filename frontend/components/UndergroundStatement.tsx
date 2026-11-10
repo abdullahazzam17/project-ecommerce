@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import graffitiWall from "@/assets/wall_grafiti.jpg";
+import SectionLabel from "./SectionLabel";
 
 export default function UndergroundStatement() {
   return (
@@ -20,10 +21,7 @@ export default function UndergroundStatement() {
       <div aria-hidden="true" className="absolute inset-0 bg-ink/80" />
 
       <div className="relative mx-auto flex min-h-[72svh] max-w-[1440px] flex-col justify-between px-[20px] py-14 md:px-12 md:py-20">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-inverse/70">
-          <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
-          06 / Underground
-        </p>
+        <SectionLabel index="06" label="Underground" tone="dark" />
 
         <div className="mt-16">
           <span

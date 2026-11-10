@@ -1,6 +1,7 @@
 "use client";
 
 import type { Product } from "../lib/types";
+import SectionLabel from "./SectionLabel";
 
 interface CollectionPreviewProps {
   products: Product[];
@@ -40,13 +41,10 @@ export default function CollectionPreview({
       <div className="mx-auto max-w-[1440px] px-[20px] py-16 md:px-12 md:py-24">
         <div className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-5">
           <div>
-            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
-              <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
-              03 / Collection
-            </p>
+            <SectionLabel index="03" label="Collection" />
             <h2
               id="collection-heading"
-              className="mt-3 break-words text-[clamp(2rem,5vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.03em]"
+              className="mt-3 break-words text-[clamp(2rem,4.5vw,4rem)] font-black uppercase leading-[0.9] tracking-[-0.03em]"
             >
               Latest pieces
             </h2>

@@ -4,16 +4,14 @@ import Image from "next/image";
 import secondaryCampaign from "@/assets/secondary_champaign.jpg";
 import lookBehind from "@/assets/look_behind.jpg";
 import imageAdd from "@/assets/image_add.jpg";
+import SectionLabel from "./SectionLabel";
 
 export default function LookbookView() {
   return (
     <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-[20px] py-10 md:px-12 md:py-14">
       <div className="border-b border-line pb-5">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
-          <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
-          Lookbook
-        </p>
-        <h2 className="mt-3 break-words text-[clamp(2rem,5vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.03em]">
+        <SectionLabel label="Lookbook" />
+        <h2 className="mt-3 break-words text-[clamp(2rem,4.5vw,4rem)] font-black uppercase leading-[0.9] tracking-[-0.03em]">
           Campaign 01
         </h2>
         <p className="mt-2 max-w-md text-sm text-muted">
