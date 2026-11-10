@@ -28,10 +28,10 @@ export default function CatalogView({
       : category;
 
   return (
-    <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-5 py-10 md:px-12 md:py-14">
+    <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-[20px] py-10 md:px-12 md:py-14">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
         <div>
-          <h2 className="text-[clamp(1.9rem,3.5vw,3rem)] font-black tracking-[-0.02em]">
+          <h2 className="break-words text-[clamp(1.9rem,3.5vw,3rem)] font-black tracking-[-0.02em]">
             {title}
           </h2>
           <p className="mt-1 text-sm text-muted" aria-live="polite">
@@ -64,7 +64,7 @@ export default function CatalogView({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-4 min-h-11 border border-ink px-5 text-xs font-bold uppercase tracking-widest transition-colors duration-200 hover:bg-canvas"
+              className="mt-4 min-h-11 border border-ink px-[20px] text-xs font-bold uppercase tracking-widest transition-colors duration-200 hover:bg-canvas"
             >
               Retry
             </button>
@@ -105,10 +105,10 @@ export default function CatalogView({
               </span>
 
               <span className="flex flex-1 flex-col justify-between p-3 md:p-4">
-                <span className="line-clamp-2 text-xs font-bold uppercase leading-tight tracking-tight md:text-sm">
+                <span className="line-clamp-2 break-words text-xs font-bold uppercase leading-tight tracking-tight md:text-sm">
                   {product.name}
                 </span>
-                <span className="mt-3 text-xs font-bold text-ink md:text-sm">
+                <span className="mt-3 break-words text-xs font-bold text-ink md:text-sm">
                   Rp {product.price.toLocaleString("id-ID")}
                 </span>
               </span>

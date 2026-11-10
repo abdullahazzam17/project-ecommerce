@@ -2,9 +2,9 @@
 
 export default function LookbookView() {
   return (
-    <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-5 py-10 md:px-12 md:py-14">
+    <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-[20px] py-10 md:px-12 md:py-14">
       <div className="border-b border-line pb-5">
-        <h2 className="text-[clamp(1.9rem,3.5vw,3rem)] font-black tracking-[-0.02em]">
+        <h2 className="break-words text-[clamp(1.9rem,3.5vw,3rem)] font-black tracking-[-0.02em]">
           Lookbook
         </h2>
         <p className="mt-1 text-sm text-muted">Campaign imagery for the current collection.</p>

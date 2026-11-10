@@ -11,7 +11,7 @@ export default function HeroView({ onShopNow, onViewLookbook }: HeroViewProps) {
   return (
     <section aria-labelledby="hero-heading" className="border-b border-line bg-canvas">
       <div className="mx-auto grid max-w-[1440px] items-stretch md:grid-cols-[1.05fr_1fr]">
-        <div className="flex flex-col justify-center px-5 pb-12 pt-10 md:px-12 md:py-16">
+        <div className="flex min-w-0 flex-col justify-center px-[20px] pb-12 pt-10 md:px-12 md:py-16">
           <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
             <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
             Zoom Cloth
@@ -20,7 +20,7 @@ export default function HeroView({ onShopNow, onViewLookbook }: HeroViewProps) {
           <div className="mt-8 md:mt-10">
             <h1
               id="hero-heading"
-              className="max-w-xl text-[clamp(2.6rem,6vw,5.5rem)] font-black leading-[0.95] tracking-[-0.03em]"
+              className="max-w-xl break-words text-[clamp(2.2rem,6vw,5.5rem)] font-black leading-[0.95] tracking-[-0.03em]"
             >
               Everyday tops and hoodies.
             </h1>
@@ -32,14 +32,14 @@ export default function HeroView({ onShopNow, onViewLookbook }: HeroViewProps) {
               <button
                 type="button"
                 onClick={onShopNow}
-                className="inline-flex min-h-12 w-full items-center justify-center bg-ink px-7 text-sm font-bold uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b] active:bg-black lg:w-auto"
+                className="inline-flex min-h-12 w-full items-center justify-center bg-ink px-[20px] text-sm font-bold uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b] active:bg-black lg:w-auto"
               >
                 Shop collection
               </button>
               <button
                 type="button"
                 onClick={onViewLookbook}
-                className="inline-flex min-h-12 w-full items-center justify-center border border-ink px-7 text-sm font-bold uppercase tracking-widest text-ink transition-colors duration-200 hover:bg-surface active:bg-[#e9e6de] lg:w-auto"
+                className="inline-flex min-h-12 w-full items-center justify-center border border-ink px-[20px] text-sm font-bold uppercase tracking-widest text-ink transition-colors duration-200 hover:bg-surface active:bg-[#e9e6de] lg:w-auto"
               >
                 View lookbook
               </button>

@@ -76,5 +76,30 @@ results.overflow768 = await tablet.evaluate(
 await tablet.screenshot({ path: join(outDir, "home-768.png"), fullPage: true });
 
 results.consoleErrors = errors;
+
+// Keyboard: enam perhentian Tab pertama harus terlihat dan logis.
+const tabStops = [];
+for (let i = 0; i < 6; i++) {
+  await page.keyboard.press("Tab");
+  tabStops.push(
+    await page.evaluate(() => {
+      const el = document.activeElement;
+      const name = el?.getAttribute("aria-label") || el?.textContent || el?.tagName || "";
+      return name.trim().slice(0, 40);
+    })
+  );
+}
+results.tabStops = tabStops;
+
+// Zoom teks 200% pada lebar 375px tidak boleh menimbulkan scroll horizontal.
+const zoomPage = await browser.newPage({ viewport: { width: 375, height: 812 } });
+await zoomPage.goto(base, { waitUntil: "networkidle" });
+await zoomPage.evaluate(() => {
+  document.documentElement.style.fontSize = "200%";
+});
+results.overflow375Zoom200 = await zoomPage.evaluate(
+  () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+);
+
 console.log(JSON.stringify(results, null, 2));
 await browser.close();

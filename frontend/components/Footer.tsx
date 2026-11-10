@@ -9,7 +9,7 @@ interface FooterProps {
 export default function Footer({ onHome, onShop, onLookbook }: FooterProps) {
   return (
     <footer className="mt-auto border-t border-line bg-canvas">
-      <div className="mx-auto max-w-[1440px] px-5 py-12 md:px-12">
+      <div className="mx-auto max-w-[1440px] px-[20px] py-12 md:px-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div>
             <button

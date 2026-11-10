@@ -93,8 +93,8 @@ export default function SearchModal({ open, products, searchQuery, onSearchChang
                     </span>
                   ) : null}
                 </span>
-                <span className="line-clamp-1 text-[11px] font-bold uppercase">{product.name}</span>
-                <span className="mt-1 block text-[11px] font-bold">
+                <span className="line-clamp-1 break-words text-[11px] font-bold uppercase">{product.name}</span>
+                <span className="mt-1 block break-words text-[11px] font-bold">
                   Rp {product.price.toLocaleString("id-ID")}
                 </span>
               </button>

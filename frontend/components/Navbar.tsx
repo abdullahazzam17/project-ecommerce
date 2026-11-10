@@ -53,7 +53,7 @@ export default function Navbar({
         className="sticky top-0 z-50 h-16 border-b border-line bg-surface/95 backdrop-blur-sm"
         onMouseLeave={closeMenu}
       >
-        <div className="mx-auto grid h-full max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center px-5 md:px-12">
+        <div className="mx-auto grid h-full max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center px-[20px] md:px-12">
           {/* Kiri: menu mobile + navigasi desktop */}
           <div className="flex items-center gap-2">
             <button
@@ -62,7 +62,7 @@ export default function Navbar({
               aria-expanded={isShopMenuOpen}
               aria-controls="shop-menu"
               onClick={() => setIsShopMenuOpen(!isShopMenuOpen)}
-              className="flex min-h-11 min-w-11 items-center justify-center md:hidden"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center md:hidden"
             >
               <svg
                 aria-hidden="true"
@@ -116,7 +116,7 @@ export default function Navbar({
               closeMenu();
             }}
             aria-label="Zoom Cloth home"
-            className="flex min-h-11 items-center justify-center px-2"
+            className="hidden min-h-11 items-center justify-center px-2 sm:flex"
           >
             <span className="text-sm font-black uppercase tracking-[0.18em] md:text-base">
               Zoom Cloth
@@ -129,7 +129,7 @@ export default function Navbar({
               type="button"
               onClick={onOpenSearch}
               aria-label="Search products"
-              className="flex min-h-11 min-w-11 items-center justify-center transition-opacity duration-200 hover:opacity-60"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity duration-200 hover:opacity-60"
             >
               <svg
                 aria-hidden="true"
@@ -147,7 +147,7 @@ export default function Navbar({
               type="button"
               onClick={() => (user ? onLogout() : onOpenAuth())}
               aria-label={user ? `Account: ${user.name}. Sign out` : "Sign in"}
-              className="flex min-h-11 min-w-11 items-center justify-center gap-1 transition-opacity duration-200 hover:opacity-60"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 transition-opacity duration-200 hover:opacity-60"
             >
               <svg
                 aria-hidden="true"
@@ -168,7 +168,7 @@ export default function Navbar({
               type="button"
               onClick={onOpenCart}
               aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"}
-              className="relative flex min-h-11 min-w-11 items-center justify-center transition-opacity duration-200 hover:opacity-60"
+              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity duration-200 hover:opacity-60"
             >
               <svg
                 aria-hidden="true"
