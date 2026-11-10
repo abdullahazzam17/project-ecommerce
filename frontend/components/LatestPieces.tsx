@@ -27,6 +27,7 @@ export default function LatestPieces({
         <div className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-5">
           <div>
             <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
+              <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
               Collection
             </p>
             <h2

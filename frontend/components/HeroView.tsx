@@ -13,6 +13,7 @@ export default function HeroView({ onShopNow, onViewLookbook }: HeroViewProps) {
       <div className="mx-auto grid max-w-[1440px] items-stretch md:grid-cols-[1.05fr_1fr]">
         <div className="flex flex-col justify-center px-5 pb-12 pt-10 md:px-12 md:py-16">
           <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
+            <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 bg-accent align-middle" />
             Zoom Cloth
           </p>
 

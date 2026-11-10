@@ -16,7 +16,7 @@ import { API_URL } from "../lib/api";
 import { FALLBACK_IMAGE, parseImages } from "../lib/images";
 import type { CartItem, Product, StoreView, User } from "../lib/types";
 
-// Tipe minimal Snap.js (dimuat dari Midtrans) — pengganti `any` sesuai quality gate.
+// Tipe minimal Snap.js (dimuat dari Midtrans) - pengganti `any` sesuai quality gate.
 interface SnapCallbacks {
   onSuccess?: () => void;
   onPending?: () => void;
@@ -158,7 +158,7 @@ export default function Home() {
   // ============ CHECKOUT TUNGGAL (MULTI-ITEM) ============
   // Dipakai oleh: BUY NOW (1 item, size terpilih) & CHECKOUT BAG (seluruh keranjang).
   // PERBAIKAN: dulu checkout bag hanya mengirim item pertama qty 1 & BUY NOW
-  // tidak mengirim ukuran — sekarang semua item + size + qty dikirim utuh.
+  // tidak mengirim ukuran - sekarang semua item + size + qty dikirim utuh.
   const handleCheckout = async (itemsToBuy: CartItem[]) => {
     if (!user) {
       setShowAuthModal(true);
@@ -352,7 +352,7 @@ export default function Home() {
         isProcessing={isProcessing}
       />
 
-      {/* MODAL AUTH — form & logika login/registrasi berada di dalam komponennya */}
+      {/* MODAL AUTH - form & logika login/registrasi berada di dalam komponennya */}
       <AuthModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
