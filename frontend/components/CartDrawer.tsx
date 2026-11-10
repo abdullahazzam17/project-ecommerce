@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useRef } from "react";
 import { HANDLING_FEE } from "../lib/api";
 import type { CartItem } from "../lib/types";
+import { useFocusTrap } from "../lib/useFocusTrap";
 
 interface CartDrawerProps {
   open: boolean;
@@ -23,28 +24,25 @@ export default function CartDrawer({
   onQuantityChange,
   isProcessing,
 }: CartDrawerProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(open, onClose, dialogRef);
 
   if (!open) return null;
 
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
   const total = subtotal + (cart.length > 0 ? HANDLING_FEE : 0);
+  const hasDemoItem = cart.some((item) => item.product.isDemo);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-ink/50 backdrop-blur-sm">
+    <div className="zc-fade-in fixed inset-0 z-50 flex justify-end bg-ink/50 backdrop-blur-sm">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-title"
-        className="flex h-full w-full max-w-md flex-col justify-between bg-surface p-6 shadow-2xl"
+        tabIndex={-1}
+        className="zc-slide-in flex h-full w-full max-w-md flex-col justify-between bg-surface p-6 shadow-2xl"
       >
         <div>
           <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
@@ -64,7 +62,7 @@ export default function CartDrawer({
           {cart.length === 0 ? (
             <p className="py-10 text-center text-sm uppercase text-muted">Your bag is empty.</p>
           ) : (
-            <ul className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+            <ul className="max-h-[58vh] space-y-4 overflow-y-auto pr-1">
               {cart.map((item, index) => (
                 <li key={`${item.product.id}-${item.size}`} className="flex gap-4 border-b border-line pb-4">
                   <span className="block h-20 w-16 shrink-0 overflow-hidden bg-[#e6e2d9]">
@@ -84,7 +82,14 @@ export default function CartDrawer({
                   </span>
 
                   <div className="min-w-0 flex-1 text-xs">
-                    <p className="font-bold uppercase leading-tight">{item.product.name}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-bold uppercase leading-tight">{item.product.name}</p>
+                      {item.product.isDemo ? (
+                        <span className="border border-ink px-1.5 py-0.5 font-mono text-[8px] font-black uppercase tracking-[0.14em]">
+                          Demo
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="mt-1 text-muted">Size {item.size}</p>
 
                     <div className="mt-2 flex items-center gap-2">
@@ -142,13 +147,24 @@ export default function CartDrawer({
               <span>Total</span>
               <span>Rp {total.toLocaleString("id-ID")}</span>
             </div>
+
+            {hasDemoItem ? (
+              <p className="border border-line bg-canvas p-3 text-xs text-muted">
+                Checkout is unavailable in demo preview.
+              </p>
+            ) : null}
+
             <button
               type="button"
               onClick={onCheckout}
-              disabled={isProcessing}
-              className="w-full bg-ink py-4 text-xs font-bold uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b] active:bg-black disabled:opacity-50"
+              disabled={isProcessing || hasDemoItem}
+              className="w-full bg-ink py-4 text-xs font-bold uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b] disabled:opacity-50"
             >
-              {isProcessing ? "Processing..." : `Checkout ${cart.length} item${cart.length === 1 ? "" : "s"}`}
+              {hasDemoItem
+                ? "Checkout unavailable in demo"
+                : isProcessing
+                  ? "Processing..."
+                  : `Checkout ${cart.length} item${cart.length === 1 ? "" : "s"}`}
             </button>
           </div>
         ) : null}

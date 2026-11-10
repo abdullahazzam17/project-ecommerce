@@ -13,6 +13,7 @@ interface NavbarProps {
   onOpenCart: () => void;
   cartCount: number;
   onSelectCategory: (category: string) => void;
+  demoMode?: boolean;
 }
 
 export default function Navbar({
@@ -25,6 +26,7 @@ export default function Navbar({
   onOpenCart,
   cartCount,
   onSelectCategory,
+  demoMode = false,
 }: NavbarProps) {
   const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
   const closeMenu = () => setIsShopMenuOpen(false);
@@ -50,12 +52,11 @@ export default function Navbar({
   return (
     <>
       <header
-        className="sticky top-0 z-50 h-16 border-b border-line bg-surface/95 backdrop-blur-sm"
+        className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-sm"
         onMouseLeave={closeMenu}
       >
-        <div className="mx-auto grid h-full max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center px-[20px] md:px-12">
-          {/* Kiri: menu mobile + navigasi desktop */}
-          <div className="flex items-center gap-2">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-[20px] md:px-12">
+          <div className="flex min-w-0 items-center gap-2 md:gap-7">
             <button
               type="button"
               aria-label={isShopMenuOpen ? "Close menu" : "Open menu"}
@@ -76,9 +77,21 @@ export default function Navbar({
               </svg>
             </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                changeView("hero");
+                closeMenu();
+              }}
+              aria-label="Zoom Cloth home"
+              className="min-h-[44px] shrink-0 text-sm font-black uppercase tracking-[0.18em] md:text-base"
+            >
+              Zoom Cloth
+            </button>
+
             <nav
               aria-label="Main"
-              className="hidden items-center gap-8 font-mono text-xs font-bold uppercase tracking-widest md:flex"
+              className="hidden items-center gap-7 font-mono text-xs font-bold uppercase tracking-widest md:flex"
             >
               <button
                 type="button"
@@ -108,23 +121,13 @@ export default function Navbar({
             </nav>
           </div>
 
-          {/* Tengah: logo (beranda) */}
-          <button
-            type="button"
-            onClick={() => {
-              changeView("hero");
-              closeMenu();
-            }}
-            aria-label="Zoom Cloth home"
-            className="hidden min-h-11 items-center justify-center px-2 sm:flex"
-          >
-            <span className="text-sm font-black uppercase tracking-[0.18em] md:text-base">
-              Zoom Cloth
-            </span>
-          </button>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            {demoMode ? (
+              <span className="mr-1 hidden border border-ink px-2 py-1 font-mono text-[9px] font-black uppercase tracking-[0.16em] sm:inline">
+                Demo preview
+              </span>
+            ) : null}
 
-          {/* Kanan: cari, akun, keranjang */}
-          <div className="flex items-center justify-end gap-1 sm:gap-3">
             <button
               type="button"
               onClick={onOpenSearch}
@@ -192,51 +195,37 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Menu Shop: hanya kategori yang benar-benar ada */}
         {isShopMenuOpen ? (
           <div
             id="shop-menu"
-            className="absolute inset-x-0 top-full border-b border-line bg-surface shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+            className="zc-fade-in absolute inset-x-0 top-full border-b border-line bg-surface shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
           >
-            <div className="mx-auto max-w-[1440px] px-5 py-4 md:px-12">
+            <div className="mx-auto max-w-[1440px] px-[20px] py-4 md:px-12">
               <ul className="flex flex-col gap-1 md:max-w-sm">
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => goToCategory("ALL")}
-                    className="flex min-h-12 w-full items-center px-3 text-left text-sm font-bold uppercase tracking-widest transition-colors duration-200 hover:bg-canvas"
-                  >
-                    All products
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => goToCategory("Baju")}
-                    className="flex min-h-12 w-full items-center px-3 text-left text-sm font-bold uppercase tracking-widest transition-colors duration-200 hover:bg-canvas"
-                  >
-                    Baju
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => goToCategory("Hoodie")}
-                    className="flex min-h-12 w-full items-center px-3 text-left text-sm font-bold uppercase tracking-widest transition-colors duration-200 hover:bg-canvas"
-                  >
-                    Hoodie
-                  </button>
-                </li>
+                {[
+                  { label: "All products", value: "ALL" },
+                  { label: "Baju", value: "Baju" },
+                  { label: "Hoodie", value: "Hoodie" },
+                ].map((item) => (
+                  <li key={item.value}>
+                    <button
+                      type="button"
+                      onClick={() => goToCategory(item.value)}
+                      className="flex min-h-12 w-full items-center px-3 text-left text-sm font-bold uppercase tracking-widest transition-colors duration-200 hover:bg-canvas"
+                    >
+                      {item.label}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         ) : null}
       </header>
 
-      {/* Overlay gelap saat menu terbuka */}
       {isShopMenuOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-ink/30"
+          className="zc-fade-in fixed inset-0 z-40 bg-ink/30"
           onClick={closeMenu}
           aria-hidden="true"
         />

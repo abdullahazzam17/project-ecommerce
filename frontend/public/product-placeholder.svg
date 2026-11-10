@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" role="img" aria-label="No product image">
+  <rect width="800" height="1000" fill="#E6E2D9"/>
+  <rect x="40" y="40" width="720" height="920" fill="none" stroke="#D3CFC7" stroke-width="2"/>
+  <rect x="60" y="470" width="24" height="4" fill="#8B81A9"/>
+  <text x="100" y="475" fill="#66635E" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" letter-spacing="6">NO IMAGE</text>
+</svg>

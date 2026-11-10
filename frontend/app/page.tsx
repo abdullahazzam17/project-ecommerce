@@ -6,13 +6,17 @@ import SearchModal from "../components/SearchModal";
 import CartDrawer from "../components/CartDrawer";
 import AuthModal from "../components/AuthModal";
 import HeroView from "../components/HeroView";
+import EditorialStory from "../components/EditorialStory";
+import CollectionPreview from "../components/CollectionPreview";
+import MaterialDetail from "../components/MaterialDetail";
+import ProductionStory from "../components/ProductionStory";
+import UndergroundStatement from "../components/UndergroundStatement";
 import CatalogView from "../components/CatalogView";
 import LookbookView from "../components/LookbookView";
 import DetailView from "../components/DetailView";
-import LatestPieces from "../components/LatestPieces";
-import CategorySection from "../components/CategorySection";
 import Footer from "../components/Footer";
 import { API_URL } from "../lib/api";
+import { DEMO_ENABLED } from "../lib/demoConfig";
 import { FALLBACK_IMAGE, parseImages } from "../lib/images";
 import type { CartItem, Product, StoreView, User } from "../lib/types";
 
@@ -39,11 +43,9 @@ export default function Home() {
 
   // Main Views: "hero", "catalog", "coming_soon", "lookbooks", "detail"
   const [currentView, setCurrentView] = useState<StoreView>("hero");
-
-  // State untuk trigger transisi antar view
   const [viewAnimation, setViewAnimation] = useState("opacity-100");
 
-  // UI Overlays (state menu toko kini berada di dalam Navbar)
+  // UI Overlays
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,16 +58,33 @@ export default function Home() {
   // Product Selection & Cart
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Muat katalog dari API. Dideklarasikan sebelum effect agar urutan deklarasi jelas
-  // dan referensinya stabil sebagai dependency.
+  const demoMode = DEMO_ENABLED;
+
   const fetchProducts = useCallback(async () => {
+    // Demo mode is explicit and isolated: no API call, no fallback behavior.
+    if (demoMode) {
+      const { demoProducts } = await import("../lib/mockProducts");
+      setProductsError(false);
+      setProducts(demoProducts);
+      setLoading(false);
+      return;
+    }
+
     try {
       setProductsError(false);
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/products`);
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 6000);
+
+      let res: Response;
+      try {
+        res = await fetch(`${API_URL}/api/products`, { signal: controller.signal });
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+
       if (!res.ok) throw new Error("Gagal fetch data produk");
 
       const data = await res.json();
@@ -86,11 +105,9 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [demoMode]);
 
   useEffect(() => {
-    // Sesi pembeli dibaca sekali setelah mount; localStorage tidak tersedia saat SSR,
-    // sehingga pembacaan di effect adalah pola yang benar (bukan derived state).
     const savedUser = localStorage.getItem("user_data");
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hidrasi sesi klien sekali dari localStorage
     if (savedUser) setUser(JSON.parse(savedUser));
@@ -98,39 +115,32 @@ export default function Home() {
     fetchProducts();
   }, [fetchProducts]);
 
-  // Fungsi ganti halaman dengan animasi transisi halus (Fade)
   const changeView = (newView: StoreView) => {
-    setViewAnimation("opacity-0 scale-95");
+    setViewAnimation("opacity-0");
     setTimeout(() => {
       setCurrentView(newView);
       window.scrollTo({ top: 0, behavior: "instant" });
-      setViewAnimation("opacity-100 scale-100");
-    }, 250);
+      setViewAnimation("opacity-100");
+    }, 200);
   };
 
   const handleProductClick = (prod: Product) => {
     setSelectedProduct(prod);
     setIsSearchOpen(false);
-
-    setRecentlyViewed((prev) => {
-      const filtered = prev.filter((p) => p.id !== prod.id);
-      return [prod, ...filtered].slice(0, 4);
-    });
-
     changeView("detail");
   };
 
-  const handleAddToCart = (prod: Product, size: string) => {
+  const handleAddToCart = (prod: Product, size: string, quantity = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === prod.id && item.size === size);
       if (existing) {
         return prev.map((item) =>
           item.product.id === prod.id && item.size === size
-            ? { ...item, quantity: Math.min(item.quantity + 1, item.product.stock) }
+            ? { ...item, quantity: Math.min(item.quantity + quantity, item.product.stock) }
             : item
         );
       }
-      return [...prev, { product: prod, size, quantity: 1 }];
+      return [...prev, { product: prod, size, quantity: Math.min(quantity, prod.stock) }];
     });
     setIsCartOpen(true);
   };
@@ -149,22 +159,24 @@ export default function Home() {
     );
   };
 
-  // Pilih kategori dari mega menu → langsung buka katalog
   const handleSelectCategory = (cat: string) => {
     setSelectedCategory(cat);
     changeView("catalog");
   };
 
-  // ============ CHECKOUT TUNGGAL (MULTI-ITEM) ============
-  // Dipakai oleh: BUY NOW (1 item, size terpilih) & CHECKOUT BAG (seluruh keranjang).
-  // PERBAIKAN: dulu checkout bag hanya mengirim item pertama qty 1 & BUY NOW
-  // tidak mengirim ukuran - sekarang semua item + size + qty dikirim utuh.
   const handleCheckout = async (itemsToBuy: CartItem[]) => {
+    if (itemsToBuy.length === 0) return;
+
+    // Demo items never reach the checkout API or Midtrans.
+    if (itemsToBuy.some((item) => item.product.isDemo)) {
+      window.alert("Checkout is unavailable in demo preview.");
+      return;
+    }
+
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-    if (itemsToBuy.length === 0) return;
 
     setIsProcessing(true);
 
@@ -194,7 +206,7 @@ export default function Home() {
         window.snap.pay(data.token, {
           onSuccess: function () {
             alert("Pembayaran Berhasil! Pesanan sedang diproses.");
-            setCart([]); // keranjang dikosongkan setelah pembayaran sukses
+            setCart([]);
             changeView("catalog");
             setIsCartOpen(false);
           },
@@ -227,15 +239,11 @@ export default function Home() {
     setShowAuthModal(false);
   };
 
-  // Filter Catalog Normal (Non Coming Soon)
   const availableProducts = products.filter((p) => !p.is_coming_soon);
-
-  // Filter khusus Coming Soon
   const comingSoonProducts = products.filter((p) => p.is_coming_soon);
 
   const filteredProducts = (currentView === "coming_soon" ? comingSoonProducts : availableProducts).filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    // Dua kategori disetujui: Baju (non-hoodie) dan Hoodie. Mapping sementara (SRS D-03).
     const category = p.category.toLowerCase();
     const matchesCategory =
       selectedCategory === "ALL" ||
@@ -243,12 +251,11 @@ export default function Home() {
     return matchesSearch && matchesCategory;
   });
 
-  const activeImages = selectedProduct?.images || [FALLBACK_IMAGE];
+  const activeImages = selectedProduct?.images?.length ? selectedProduct.images : [FALLBACK_IMAGE];
   const cartCount = cart.reduce((a, b) => a + b.quantity, 0);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-canvas font-sans text-ink antialiased selection:bg-ink selection:text-inverse">
-
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80] focus:bg-ink focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-inverse"
@@ -256,7 +263,6 @@ export default function Home() {
         Skip to content
       </a>
 
-      {/* HEADER + MENU */}
       <Navbar
         currentView={currentView}
         changeView={changeView}
@@ -267,9 +273,9 @@ export default function Home() {
         onOpenCart={() => setIsCartOpen(true)}
         cartCount={cartCount}
         onSelectCategory={handleSelectCategory}
+        demoMode={demoMode}
       />
 
-      {/* MODAL SEARCH */}
       <SearchModal
         open={isSearchOpen}
         products={filteredProducts}
@@ -279,40 +285,41 @@ export default function Home() {
         onSelectProduct={handleProductClick}
       />
 
-      {/* ================= AREA KONTEN UTAMA ================= */}
       <main
         id="main-content"
-        className={`flex w-full flex-1 flex-col transition-all duration-300 ease-in-out ${viewAnimation}`}
+        className={`flex w-full flex-1 flex-col transition-opacity duration-200 ease-in-out ${viewAnimation}`}
       >
-
-        {/* VIEW 1: HOMEPAGE (scrollable) */}
         {currentView === "hero" && (
           <>
             <HeroView
               onShopNow={() => changeView("catalog")}
               onViewLookbook={() => changeView("lookbooks")}
             />
-            <LatestPieces
+            <EditorialStory />
+            <CollectionPreview
               products={availableProducts}
               loading={loading}
               error={productsError}
+              demoMode={demoMode}
               onRetry={fetchProducts}
               onSelectProduct={handleProductClick}
               onViewAll={() => {
                 setSelectedCategory("ALL");
                 changeView("catalog");
               }}
+              onExploreLookbook={() => changeView("lookbooks")}
             />
-            <CategorySection
-              products={availableProducts}
-              loading={loading}
-              error={productsError}
-              onSelectCategory={handleSelectCategory}
+            <MaterialDetail />
+            <ProductionStory
+              onViewCollection={() => {
+                setSelectedCategory("ALL");
+                changeView("catalog");
+              }}
             />
+            <UndergroundStatement />
           </>
         )}
 
-        {/* VIEW 2: KATALOG / COMING SOON */}
         {(currentView === "catalog" || currentView === "coming_soon") && (
           <CatalogView
             isComingSoon={currentView === "coming_soon"}
@@ -320,28 +327,30 @@ export default function Home() {
             filteredProducts={filteredProducts}
             loading={loading}
             error={productsError}
+            demoMode={demoMode}
             onRetry={fetchProducts}
             onProductClick={handleProductClick}
+            onSelectCategory={handleSelectCategory}
           />
         )}
 
-        {/* VIEW 3: LOOKBOOKS */}
         {currentView === "lookbooks" && <LookbookView />}
 
-        {/* VIEW 4: DETAIL PRODUK - key=id supaya state foto/size reset saat ganti produk */}
         {currentView === "detail" && selectedProduct && (
           <DetailView
             key={selectedProduct.id}
             product={selectedProduct}
             images={activeImages}
             isProcessing={isProcessing}
-            onBuyNow={(size) => handleCheckout([{ product: selectedProduct, size, quantity: 1 }])}
-            onAddToCart={(size) => handleAddToCart(selectedProduct, size)}
+            onBack={() => changeView("catalog")}
+            onBuyNow={(size, quantity) =>
+              handleCheckout([{ product: selectedProduct, size, quantity }])
+            }
+            onAddToCart={(size, quantity) => handleAddToCart(selectedProduct, size, quantity)}
           />
         )}
       </main>
 
-      {/* SIDE DRAWER CART: checkout mengirim SELURUH isi keranjang */}
       <CartDrawer
         open={isCartOpen}
         cart={cart}
@@ -352,14 +361,12 @@ export default function Home() {
         isProcessing={isProcessing}
       />
 
-      {/* MODAL AUTH - form & logika login/registrasi berada di dalam komponennya */}
       <AuthModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
       />
 
-      {/* FOOTER */}
       <Footer
         onHome={() => changeView("hero")}
         onShop={() => {

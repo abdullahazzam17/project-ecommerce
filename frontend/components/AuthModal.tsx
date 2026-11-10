@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { API_URL } from "../lib/api";
 import type { User } from "../lib/types";
+import { useFocusTrap } from "../lib/useFocusTrap";
 
 interface AuthModalProps {
   open: boolean;
@@ -17,15 +18,8 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
   const [authPhone, setAuthPhone] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(open, onClose, dialogRef);
 
   const resetAuthForm = () => {
     setAuthName("");
@@ -35,8 +29,8 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
     setAuthError("");
   };
 
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuthSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setAuthError("");
 
     const endpoint = isRegistering ? "/api/auth/register" : "/api/auth/login";
@@ -45,15 +39,15 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
       : { email: authEmail, password: authPassword };
 
     try {
-      const res = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (res.ok && data.status === "success") {
+      if (response.ok && data.status === "success") {
         localStorage.setItem("user_token", data.token);
         localStorage.setItem("user_data", JSON.stringify(data.user));
         onSuccess(data.user);
@@ -61,35 +55,25 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
       } else {
         setAuthError(data.detail || "Terjadi kesalahan.");
       }
-    } catch (err) {
+    } catch (error) {
       setAuthError("Gagal terhubung ke server. Pastikan layanan toko menyala.");
-      console.error(err);
+      console.error(error);
     }
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm">
+    <div className="zc-fade-in fixed inset-0 z-[70] flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-title"
-        className="relative w-full max-w-md border border-line bg-surface p-6 shadow-2xl md:p-8"
+        tabIndex={-1}
+        className="zc-rise relative w-full max-w-md border border-line bg-surface p-6 shadow-2xl md:p-8"
       >
-        <button
-          type="button"
-          onClick={() => {
-            onClose();
-            resetAuthForm();
-          }}
-          aria-label="Close sign in"
-          className="absolute right-3 top-3 flex min-h-11 min-w-11 items-center justify-center text-xl font-black text-muted transition-colors duration-200 hover:text-ink"
-        >
-          ✕
-        </button>
-
-        <h3 id="auth-title" className="mb-6 text-center text-xl font-black uppercase">
+        <h3 id="auth-title" className="mb-6 pr-12 text-xl font-black uppercase">
           {isRegistering ? "Create account" : "Sign in"}
         </h3>
 
@@ -110,7 +94,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
                 type="text"
                 placeholder="Nama lengkap"
                 value={authName}
-                onChange={(e) => setAuthName(e.target.value)}
+                onChange={(event) => setAuthName(event.target.value)}
                 autoComplete="name"
                 className="w-full border border-line bg-canvas p-3 text-ink outline-none transition-colors duration-200 focus:border-ink"
                 required
@@ -127,9 +111,8 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
               type="email"
               placeholder="nama@email.com"
               value={authEmail}
-              onChange={(e) => setAuthEmail(e.target.value)}
+              onChange={(event) => setAuthEmail(event.target.value)}
               autoComplete="email"
-              autoFocus
               className="w-full border border-line bg-canvas p-3 text-ink outline-none transition-colors duration-200 focus:border-ink"
               required
             />
@@ -145,7 +128,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
                 type="tel"
                 placeholder="08123456789"
                 value={authPhone}
-                onChange={(e) => setAuthPhone(e.target.value)}
+                onChange={(event) => setAuthPhone(event.target.value)}
                 autoComplete="tel"
                 className="w-full border border-line bg-canvas p-3 text-ink outline-none transition-colors duration-200 focus:border-ink"
                 required
@@ -162,7 +145,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
               type="password"
               placeholder="••••••••"
               value={authPassword}
-              onChange={(e) => setAuthPassword(e.target.value)}
+              onChange={(event) => setAuthPassword(event.target.value)}
               autoComplete={isRegistering ? "new-password" : "current-password"}
               className="w-full border border-line bg-canvas p-3 text-ink outline-none transition-colors duration-200 focus:border-ink"
               required
@@ -171,7 +154,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
 
           <button
             type="submit"
-            className="mt-2 min-h-12 w-full bg-ink py-3 text-xs font-bold uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b] active:bg-black"
+            className="mt-2 min-h-12 w-full bg-ink py-3 text-xs font-bold uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b]"
           >
             {isRegistering ? "Register" : "Sign in"}
           </button>
@@ -189,6 +172,19 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
             {isRegistering ? "Already have an account? Sign in" : "No account yet? Register"}
           </button>
         </div>
+
+        {/* Close ditempatkan terakhir di DOM agar fokus awal masuk ke field form. */}
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            resetAuthForm();
+          }}
+          aria-label="Close sign in"
+          className="absolute right-3 top-3 flex min-h-11 min-w-11 items-center justify-center text-xl font-black text-muted transition-colors duration-200 hover:text-ink"
+        >
+          ✕
+        </button>
       </div>
     </div>
   );

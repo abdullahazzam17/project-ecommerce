@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Zoom Cloth | Tops and hoodies",
-  description: "Browse the Zoom Cloth collection of tops and hoodies.",
+  title: "Zoom Cloth | Streetwear and custom apparel",
+  description: "Zoom Cloth streetwear storefront: tops, hoodies, and print.",
 };
 
 export default function RootLayout({
@@ -18,12 +18,15 @@ export default function RootLayout({
   return (
     <html lang="id" className={inter.variable}>
       <head>
-        {/* Script Midtrans Snap (sandbox) dimuat setelah halaman siap, bukan render-blocking. */}
-        <Script
-          src="https://app.sandbox.midtrans.com/snap/snap.js"
-          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-          strategy="lazyOnload"
-        />
+        {/* Snap.js tidak dimuat pada demo mode frontend (tidak ada pembayaran). */}
+        {process.env.NEXT_PUBLIC_ENABLE_DEMO_PRODUCTS !== "true" ||
+        process.env.NODE_ENV === "production" ? (
+          <Script
+            src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+            strategy="lazyOnload"
+          />
+        ) : null}
       </head>
       <body>{children}</body>
     </html>

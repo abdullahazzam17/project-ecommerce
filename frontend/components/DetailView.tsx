@@ -7,144 +7,215 @@ interface DetailViewProps {
   product: Product;
   images: string[];
   isProcessing: boolean;
-  // Size dipilih di dalam komponen ini; dikirim ke halaman saat aksi
-  onBuyNow: (size: string) => void;
-  onAddToCart: (size: string) => void;
+  onBack: () => void;
+  onBuyNow: (size: string, quantity: number) => void;
+  onAddToCart: (size: string, quantity: number) => void;
 }
 
-export default function DetailView({ product, images, isProcessing, onBuyNow, onAddToCart }: DetailViewProps) {
+const SIZES = ["S", "M", "L", "XL", "XXL"];
+
+export default function DetailView({
+  product,
+  images,
+  isProcessing,
+  onBack,
+  onBuyNow,
+  onAddToCart,
+}: DetailViewProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string>("L");
+  const [selectedSize, setSelectedSize] = useState("L");
+  const [quantity, setQuantity] = useState(1);
+
+  const stock = Math.max(0, product.stock);
+  const maxQuantity = Math.max(1, stock);
+  const soldOut = stock === 0;
+  const activeImage = images[currentImageIndex] ?? "/product-placeholder.svg";
+
+  const decrease = () => setQuantity((current) => Math.max(1, current - 1));
+  const increase = () => setQuantity((current) => Math.min(maxQuantity, current + 1));
 
   return (
-    <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas p-5 md:p-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
-        {/* SLIDER FOTO */}
-        <div className="space-y-4">
-          <div className="relative w-full aspect-square bg-[#e6e2d9] overflow-hidden rounded-sm border border-line">
+    <section className="mx-auto w-full max-w-[1440px] flex-1 bg-canvas px-[20px] py-8 md:px-12 md:py-12">
+      <button
+        type="button"
+        onClick={onBack}
+        className="min-h-11 border-b border-ink pb-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] transition-opacity duration-200 hover:opacity-60"
+      >
+        Back to collection
+      </button>
+
+      <div className="mt-6 grid gap-8 md:grid-cols-12 md:gap-10">
+        <div className="md:col-span-7">
+          <div className="relative aspect-[4/5] overflow-hidden border border-line bg-[#e6e2d9]">
             <img
-              key={currentImageIndex}
-              src={images[currentImageIndex]}
+              key={activeImage}
+              src={activeImage}
               alt={product.name}
-              className="w-full h-full object-cover transition-all duration-500 ease-in-out animate-in fade-in zoom-in-95"
+              width={800}
+              height={1000}
+              className="h-full w-full object-cover"
             />
 
-            {images.length > 1 && (
+            {images.length > 1 ? (
               <>
                 <button
+                  type="button"
                   onClick={() =>
                     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
                   }
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-surface/90 hover:bg-black hover:text-white text-ink p-3 rounded-full shadow-md font-bold text-xs transition-all duration-200 active:scale-90"
+                  aria-label="Previous image"
+                  className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-surface/90 text-sm font-bold transition-colors duration-200 hover:bg-ink hover:text-inverse"
                 >
                   &#10094;
                 </button>
                 <button
+                  type="button"
                   onClick={() =>
                     setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-surface/90 hover:bg-black hover:text-white text-ink p-3 rounded-full shadow-md font-bold text-xs transition-all duration-200 active:scale-90"
+                  aria-label="Next image"
+                  className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-surface/90 text-sm font-bold transition-colors duration-200 hover:bg-ink hover:text-inverse"
                 >
                   &#10095;
                 </button>
               </>
-            )}
+            ) : null}
           </div>
 
-          {images.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {images.map((img, idx) => (
+          {images.length > 1 ? (
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
+              {images.map((image, index) => (
                 <button
-                  key={idx}
-                  onClick={() => setCurrentImageIndex(idx)}
-                  className={`w-20 h-20 flex-shrink-0 border-2 rounded-sm overflow-hidden transition-all duration-200 ${
-                    idx === currentImageIndex ? "border-black scale-105 shadow-md" : "border-line opacity-60 hover:opacity-100"
+                  key={`${image.slice(0, 24)}-${index}`}
+                  type="button"
+                  onClick={() => setCurrentImageIndex(index)}
+                  aria-label={`Show image ${index + 1}`}
+                  aria-pressed={index === currentImageIndex}
+                  className={`h-20 w-16 shrink-0 overflow-hidden border transition-opacity duration-200 ${
+                    index === currentImageIndex
+                      ? "border-ink opacity-100"
+                      : "border-line opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                  <img src={image} alt="" width={64} height={80} className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
-        {/* DETAIL INFO & ACTION */}
-        <div className="space-y-6">
-          <div>
-            <span className="text-xs font-bold text-muted tracking-widest uppercase flex items-center gap-2">
+        <div className="md:col-span-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
               {product.category}
-              {product.is_coming_soon && (
-                <span className="bg-ink text-white text-[9px] font-black px-2 py-0.5 rounded">
-                  COMING SOON
-                </span>
-              )}
-            </span>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-ink uppercase mt-1">
-              {product.name}
-            </h2>
-            <p className="text-2xl font-bold text-ink mt-2">
-              Rp {product.price.toLocaleString("id-ID")}
             </p>
-            <p className="text-[10px] font-bold text-muted mt-1 uppercase">
-              Stok tersedia: {product.stock}
-            </p>
+            {product.isDemo ? (
+              <span className="border border-ink px-2 py-1 font-mono text-[9px] font-black uppercase tracking-[0.16em]">
+                Demo preview
+              </span>
+            ) : null}
+            {product.is_coming_soon ? (
+              <span className="bg-ink px-2 py-1 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-inverse">
+                Coming soon
+              </span>
+            ) : null}
           </div>
 
-          {/* SIZE SELECTION */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-xs font-bold">
-              <span>SELECT SIZE</span>
-              <span className="underline cursor-pointer hover:text-muted">Size Guide &gt;</span>
+          <h1 className="mt-3 break-words text-[clamp(1.9rem,4vw,3.25rem)] font-black uppercase leading-[0.95] tracking-[-0.03em]">
+            {product.name}
+          </h1>
+          <p className="mt-3 text-xl font-bold">Rp {product.price.toLocaleString("id-ID")}</p>
+          <p className="mt-1 text-sm text-muted">
+            {soldOut ? "Out of stock" : `${stock} in stock`}
+          </p>
+
+          <p className="mt-5 border-t border-line pt-5 text-sm leading-relaxed text-muted">
+            {product.description}
+          </p>
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-4">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]">Size</p>
+              <p className="text-xs text-muted">S to XXL</p>
             </div>
-            <div className="grid grid-cols-5 gap-2 md:gap-3">
-              {["S", "M", "L", "XL", "XXL"].map((sz) => (
+            <div className="mt-3 grid grid-cols-5 gap-2">
+              {SIZES.map((size) => (
                 <button
-                  key={sz}
-                  onClick={() => setSelectedSize(sz)}
-                  className={`py-3 text-xs font-bold border rounded-sm transition-all duration-200 active:scale-95 ${
-                    selectedSize === sz
-                      ? "border-black bg-black text-white shadow-md"
-                      : "border-line text-ink hover:border-black"
+                  key={size}
+                  type="button"
+                  onClick={() => setSelectedSize(size)}
+                  aria-pressed={selectedSize === size}
+                  className={`min-h-12 border text-xs font-bold transition-colors duration-200 ${
+                    selectedSize === size
+                      ? "border-ink bg-ink text-inverse"
+                      : "border-line bg-surface text-ink hover:border-ink"
                   }`}
                 >
-                  {sz}
+                  {size}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* DESKRIPSI TEKS */}
-          <div className="pt-2 border-t border-line">
-            <span className="text-xs font-bold uppercase block mb-2">Description</span>
-            <p className="text-xs md:text-sm text-muted leading-relaxed">
-              {product.description}
-            </p>
+          <div className="mt-6">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]">Quantity</p>
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={decrease}
+                disabled={quantity <= 1 || soldOut}
+                aria-label="Decrease quantity"
+                className="flex h-11 w-11 items-center justify-center border border-line text-sm font-bold transition-colors duration-200 hover:border-ink disabled:opacity-40"
+              >
+                -
+              </button>
+              <span aria-live="polite" className="min-w-10 text-center text-sm font-bold">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={increase}
+                disabled={quantity >= maxQuantity || soldOut}
+                aria-label="Increase quantity"
+                className="flex h-11 w-11 items-center justify-center border border-line text-sm font-bold transition-colors duration-200 hover:border-ink disabled:opacity-40"
+              >
+                +
+              </button>
+              <span className="text-xs text-muted">Max {maxQuantity}</span>
+            </div>
           </div>
 
-          {/* ACTION BUTTONS (DISABLE JIKA COMING SOON) */}
-          <div className="space-y-3 pt-4">
-            {product.is_coming_soon ? (
+          {product.isDemo ? (
+            <p className="mt-6 border border-line bg-surface p-3 text-xs text-muted">
+              Demo item. Checkout is disabled in preview.
+            </p>
+          ) : null}
+
+          <div className="mt-6 space-y-3">
+            {product.is_coming_soon || soldOut ? (
               <button
+                type="button"
                 disabled
-                className="w-full bg-canvas border border-line text-muted font-black py-4 rounded-sm tracking-widest text-xs uppercase cursor-not-allowed"
+                className="w-full border border-line bg-canvas py-4 text-xs font-black uppercase tracking-widest text-muted"
               >
-                COMING SOON - NOT AVAILABLE FOR PURCHASE YET
+                {product.is_coming_soon ? "Coming soon" : "Out of stock"}
               </button>
             ) : (
               <>
                 <button
-                  onClick={() => onBuyNow(selectedSize)}
+                  type="button"
+                  onClick={() => onBuyNow(selectedSize, quantity)}
                   disabled={isProcessing}
-                  className="w-full bg-black hover:bg-gray-800 text-white font-black py-4 rounded-sm tracking-widest text-sm uppercase shadow-xl transition-all duration-200 active:scale-98 disabled:opacity-50"
+                  className="w-full bg-ink py-4 text-xs font-black uppercase tracking-widest text-inverse transition-colors duration-200 hover:bg-[#2b2b2b] disabled:opacity-50"
                 >
-                  {isProcessing ? "PROCESSING..." : "BUY NOW (DIRECT CHECKOUT)"}
+                  {isProcessing ? "Processing..." : "Buy now"}
                 </button>
-
                 <button
-                  onClick={() => onAddToCart(selectedSize)}
-                  className="w-full bg-surface border border-black text-ink hover:bg-gray-50 font-bold py-3.5 rounded-sm tracking-widest text-xs uppercase transition-all duration-200 active:scale-98"
+                  type="button"
+                  onClick={() => onAddToCart(selectedSize, quantity)}
+                  className="w-full border border-ink py-4 text-xs font-black uppercase tracking-widest transition-colors duration-200 hover:bg-surface"
                 >
-                  ADD TO CART BAG
+                  Add to cart
                 </button>
               </>
             )}

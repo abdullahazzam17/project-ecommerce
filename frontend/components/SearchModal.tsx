@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useRef } from "react";
 import type { Product } from "../lib/types";
+import { useFocusTrap } from "../lib/useFocusTrap";
 
 interface SearchModalProps {
   open: boolean;
@@ -12,30 +13,33 @@ interface SearchModalProps {
   onSelectProduct: (p: Product) => void;
 }
 
-export default function SearchModal({ open, products, searchQuery, onSearchChange, onClose, onSelectProduct }: SearchModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+export default function SearchModal({
+  open,
+  products,
+  searchQuery,
+  onSearchChange,
+  onClose,
+  onSelectProduct,
+}: SearchModalProps) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(open, onClose, dialogRef);
 
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-ink/60 px-4 pt-16 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+      className="zc-fade-in fixed inset-0 z-[60] flex items-start justify-center bg-ink/60 px-4 pt-16 backdrop-blur-sm"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Search products"
-        className="max-h-[85vh] w-full max-w-3xl space-y-6 overflow-y-auto border border-line bg-surface p-6 shadow-2xl md:p-8"
+        tabIndex={-1}
+        className="zc-rise max-h-[85vh] w-full max-w-3xl space-y-6 overflow-y-auto border border-line bg-surface p-6 shadow-2xl md:p-8"
       >
         <div className="flex items-center gap-3 border-b border-ink pb-3">
           <svg aria-hidden="true" className="h-6 w-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,8 +50,7 @@ export default function SearchModal({ open, products, searchQuery, onSearchChang
             placeholder="Search products"
             aria-label="Search products"
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            autoFocus
+            onChange={(event) => onSearchChange(event.target.value)}
             className="w-full border-none bg-transparent text-lg font-bold text-ink outline-none placeholder:text-muted md:text-xl"
           />
           <button
@@ -61,7 +64,7 @@ export default function SearchModal({ open, products, searchQuery, onSearchChang
         </div>
 
         <div className="space-y-3">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
             {searchQuery !== "" ? `Results (${products.length})` : "All products"}
           </p>
 
@@ -90,6 +93,11 @@ export default function SearchModal({ open, products, searchQuery, onSearchChang
                   {product.is_coming_soon ? (
                     <span className="absolute left-1 top-1 bg-ink px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-inverse">
                       Soon
+                    </span>
+                  ) : null}
+                  {product.isDemo ? (
+                    <span className="absolute right-1 top-1 bg-ink px-1.5 py-0.5 font-mono text-[8px] font-black uppercase tracking-[0.14em] text-inverse">
+                      Demo
                     </span>
                   ) : null}
                 </span>

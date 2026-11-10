@@ -10,6 +10,8 @@ export interface Product {
   image_url?: string;
   images?: string[];
   is_coming_soon?: boolean;
+  /** Hanya true untuk fixture demo lokal. Tidak pernah berasal dari API. */
+  isDemo?: boolean;
 }
 
 export interface User {

@@ -1,5 +1,4 @@
-export const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80";
+export const FALLBACK_IMAGE = "/product-placeholder.svg";
 
 // Helper cerdas pemisah foto agar Base64 tidak terpotong koma bawaan
 export const parseImages = (urlStr?: string): string[] => {
