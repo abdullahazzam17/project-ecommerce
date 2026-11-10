@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --zc-canvas: #f1efe9;
+  --zc-surface: #faf9f6;
+  --zc-ink: #161616;
+  --zc-muted: #66635e;
+  --zc-line: #d3cfc7;
+  --zc-inverse: #f6f3ec;
+  --zc-accent: #8b81a9;
+  --zc-error: #b42318;
+  --zc-success: #226b49;
+}
+
+@theme inline {
+  --color-canvas: var(--zc-canvas);
+  --color-surface: var(--zc-surface);
+  --color-ink: var(--zc-ink);
+  --color-muted: var(--zc-muted);
+  --color-line: var(--zc-line);
+  --color-inverse: var(--zc-inverse);
+  --color-accent: var(--zc-accent);
+  --color-error: var(--zc-error);
+  --color-success: var(--zc-success);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--zc-canvas);
+    color: var(--zc-ink);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* R-39: kontrol yang bisa dipakai menunjukkan kursor pointer; yang nonaktif tidak. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  select {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /* R-32: indikator fokus terlihat, kontras terhadap latar terang maupun gelap. */
+  :focus-visible {
+    outline: 2px solid var(--zc-ink);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

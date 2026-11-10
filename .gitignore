@@ -20,3 +20,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Bukti QA lokal
+frontend/screenshots/
