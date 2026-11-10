@@ -181,9 +181,13 @@ export default function Home() {
     setIsProcessing(true);
 
     try {
+      const token = localStorage.getItem("user_token");
       const response = await fetch(`${API_URL}/api/checkout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           items: itemsToBuy.map((item) => ({
             product_id: item.product.id,
@@ -196,7 +200,16 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        localStorage.removeItem("user_token");
+        localStorage.removeItem("user_data");
+        setUser(null);
+        setShowAuthModal(true);
+        alert("Sesi login berakhir. Silakan login lagi.");
+        return;
+      }
 
       if (data.token) {
         if (!window.snap) {
@@ -221,7 +234,7 @@ export default function Home() {
         alert(data.detail || "Gagal membuat transaksi.");
       }
     } catch (error) {
-      alert("Gagal terhubung ke server checkout. Pastikan backend menyala!");
+      alert("Gagal terhubung ke server checkout. Periksa NEXT_PUBLIC_API_URL dan pastikan API aktif.");
       console.error(error);
     } finally {
       setIsProcessing(false);

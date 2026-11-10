@@ -142,7 +142,7 @@ export default function CatalogView({
           <div role="alert" className="col-span-full border border-line bg-surface p-6">
             <p className="text-sm font-bold">Products could not be loaded.</p>
             <p className="mt-1 text-sm text-muted">
-              The store service is not reachable. Try again when it is running.
+              The store service is not reachable. Check NEXT_PUBLIC_API_URL for this deployment, then try again.
             </p>
             <button
               type="button"

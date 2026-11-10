@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: zoomcustom-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        sync: false
+      - key: MIDTRANS_SERVER_KEY
+        sync: false
+      - key: MIDTRANS_CLIENT_KEY
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: USER_TOKEN_SECRET
+        sync: false
+      - key: FRONTEND_ORIGINS
+        sync: false
+      - key: FRONTEND_ORIGIN_REGEX
+        value: "https://([a-z0-9-]+\\.)*(vercel\\.app|trycloudflare\\.com|ngrok-free\\.app|ngrok\\.app)"
+      - key: MIDTRANS_VERIFY_SIGNATURE
+        value: "true"

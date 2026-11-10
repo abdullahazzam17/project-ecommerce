@@ -1,5 +1,5 @@
 // Titik pusat konfigurasi API - TIDAK ADA LAGI URL HARDCODE tersebar di file komponen.
-// Di browser HP: NEXT_PUBLIC_API_URL = http://192.168.0.1:8000 (lihat .env.local)
+// Lokal/HP: http://192.168.0.1:8000. Vercel: URL HTTPS backend publik (bukan IP LAN/localhost).
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Biaya penanganan ditambahkan backend saat checkout (backend/main.py: admin_fee).

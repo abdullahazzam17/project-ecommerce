@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Bukti QA lokal (screenshot Playwright)
 screenshots/
+!.env.example
