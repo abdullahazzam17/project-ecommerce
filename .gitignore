@@ -33,3 +33,7 @@ LAPORAN-PROYEK.md
 opencode.jsonc
 frontend/AGENTS.md
 frontend/CLAUDE.md
+
+# Agent tooling lokal (skills tidak dibutuhkan untuk deploy)
+.agents/
+skills-lock.json
