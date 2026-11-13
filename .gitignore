@@ -23,3 +23,13 @@ Thumbs.db
 
 # Bukti QA lokal
 frontend/screenshots/
+
+# Dokumen internal & konfigurasi agent (tetap ada di lokal, tidak untuk repo deploy)
+AGENTS.md
+DESIGN.md
+SRS.md
+OPENCODE-SETUP.md
+LAPORAN-PROYEK.md
+opencode.jsonc
+frontend/AGENTS.md
+frontend/CLAUDE.md
