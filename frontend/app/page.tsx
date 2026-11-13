@@ -15,7 +15,7 @@ import CatalogView from "../components/CatalogView";
 import LookbookView from "../components/LookbookView";
 import DetailView from "../components/DetailView";
 import Footer from "../components/Footer";
-import { API_URL, getApiErrorMessage } from "../lib/api";
+import { API_URL, apiFetch, getApiErrorMessage } from "../lib/api";
 import { DEMO_ENABLED } from "../lib/demoConfig";
 import { FALLBACK_IMAGE, parseImages } from "../lib/images";
 import type { CartItem, Product, StoreView, User } from "../lib/types";
@@ -80,7 +80,7 @@ export default function Home() {
 
       let res: Response;
       try {
-        res = await fetch(`${API_URL}/api/products`, { signal: controller.signal });
+        res = await apiFetch(`${API_URL}/api/products`, { signal: controller.signal });
       } finally {
         window.clearTimeout(timeoutId);
       }
@@ -190,7 +190,7 @@ export default function Home() {
 
     try {
       const token = localStorage.getItem("user_token");
-      const response = await fetch(`${API_URL}/api/checkout`, {
+      const response = await apiFetch(`${API_URL}/api/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

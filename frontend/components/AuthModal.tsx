@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { API_URL, getApiErrorMessage } from "../lib/api";
+import { API_URL, apiFetch, getApiErrorMessage } from "../lib/api";
 import type { User } from "../lib/types";
 import { useFocusTrap } from "../lib/useFocusTrap";
 
@@ -39,7 +39,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
       : { email: authEmail, password: authPassword };
 
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await apiFetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData),

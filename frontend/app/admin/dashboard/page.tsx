@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_URL, adminAuthHeaders } from "../../../lib/api";
+import { API_URL, adminAuthHeaders, apiFetch } from "../../../lib/api";
 
 interface Product {
   id: number;
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
 
   const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/analytics`, { headers: authHeaders() });
+      const res = await apiFetch(`${API_URL}/api/admin/analytics`, { headers: authHeaders() });
       if (res.ok) setAnalytics(await res.json());
       else if (res.status === 401) router.push("/admin/login");
     } catch (err) { console.error(err); }
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
 
   const fetchOrders = useCallback(async (filter: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/orders?range=${filter}`, { headers: authHeaders() });
+      const res = await apiFetch(`${API_URL}/api/admin/orders?range=${filter}`, { headers: authHeaders() });
       if (res.ok) setOrders(await res.json());
       else if (res.status === 401) router.push("/admin/login");
     } catch (err) { console.error(err); }
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/products`);
+      const res = await apiFetch(`${API_URL}/api/products`);
       if (res.ok) setProducts(await res.json());
     } catch (err) { console.error(err); }
   }, []);
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
     const method = editingProduct ? "PUT" : "POST";
 
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: method,
         headers: authHeaders(),
         body: JSON.stringify(payload),
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
   const handleDeleteProduct = async (id: number) => {
     if (confirm("Yakin ingin menghapus produk ini?")) {
       try {
-        await fetch(`${API_URL}/api/products/${id}`, { method: "DELETE", headers: authHeaders() });
+        await apiFetch(`${API_URL}/api/products/${id}`, { method: "DELETE", headers: authHeaders() });
         fetchProducts();
       } catch { alert("Gagal menghapus produk"); }
     }

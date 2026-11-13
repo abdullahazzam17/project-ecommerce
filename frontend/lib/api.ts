@@ -45,3 +45,16 @@ export function getApiErrorMessage(payload: unknown, fallback: string): string {
 
   return fallback;
 }
+
+
+/**
+ * Wrapper fetch untuk API backend.
+ * Header ngrok-skip-browser-warning mencegah halaman peringatan HTML dari
+ * ngrok free yang dapat merusak respons JSON. Header ini diabaikan backend
+ * dan tunnel lain.
+ */
+export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  headers.set("ngrok-skip-browser-warning", "true");
+  return fetch(input, { ...init, headers });
+}
