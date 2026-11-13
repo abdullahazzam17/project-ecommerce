@@ -14,3 +14,34 @@ export function adminAuthHeaders(): Record<string, string> {
     Authorization: `Bearer ${token}`,
   };
 }
+
+
+/**
+ * FastAPI dapat mengembalikan detail berupa string atau array error validasi.
+ * Ubah keduanya menjadi satu pesan teks yang aman dirender React.
+ */
+export function getApiErrorMessage(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") return fallback;
+  const detail = (payload as { detail?: unknown }).detail;
+
+  if (typeof detail === "string" && detail.trim()) return detail;
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const entry = item as { msg?: unknown; loc?: unknown };
+          const loc = Array.isArray(entry.loc)
+            ? entry.loc.filter((part) => part !== "body" && part !== "query" && part !== "path").join(".")
+            : "";
+          const msg = typeof entry.msg === "string" ? entry.msg : "";
+          return [loc, msg].filter(Boolean).join(": ");
+        }
+        return typeof item === "string" ? item : "";
+      })
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(". ");
+  }
+
+  return fallback;
+}

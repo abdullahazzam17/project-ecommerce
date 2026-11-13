@@ -15,7 +15,7 @@ import CatalogView from "../components/CatalogView";
 import LookbookView from "../components/LookbookView";
 import DetailView from "../components/DetailView";
 import Footer from "../components/Footer";
-import { API_URL } from "../lib/api";
+import { API_URL, getApiErrorMessage } from "../lib/api";
 import { DEMO_ENABLED } from "../lib/demoConfig";
 import { FALLBACK_IMAGE, parseImages } from "../lib/images";
 import type { CartItem, Product, StoreView, User } from "../lib/types";
@@ -239,7 +239,7 @@ export default function Home() {
           },
         });
       } else {
-        alert(data.detail || "Gagal membuat transaksi.");
+        alert(getApiErrorMessage(data, "Gagal membuat transaksi."));
       }
     } catch (error) {
       alert("Gagal terhubung ke server checkout. Periksa NEXT_PUBLIC_API_URL dan pastikan API aktif.");

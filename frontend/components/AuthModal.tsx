@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { API_URL } from "../lib/api";
+import { API_URL, getApiErrorMessage } from "../lib/api";
 import type { User } from "../lib/types";
 import { useFocusTrap } from "../lib/useFocusTrap";
 
@@ -53,7 +53,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
         onSuccess(data.user);
         resetAuthForm();
       } else {
-        setAuthError(data.detail || "Terjadi kesalahan.");
+        setAuthError(getApiErrorMessage(data, "Terjadi kesalahan."));
       }
     } catch (error) {
       setAuthError("Gagal terhubung ke server. Pastikan layanan toko menyala.");

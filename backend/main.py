@@ -11,6 +11,7 @@ from typing import List, Optional
 import midtransclient
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security.utils import get_authorization_scheme_param
@@ -87,6 +88,19 @@ async def handle_database_error(request: Request, exc: SQLAlchemyError):
     # 503 (bukan 500 mentah) agar response tetap melewati middleware CORS.
     print("DB error:", type(exc).__name__, str(exc)[:160])
     return JSONResponse(status_code=503, content={"detail": "Database tidak terjangkau"})
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    detail = "Input tidak valid"
+    if errors:
+        first = errors[0]
+        loc = [str(part) for part in first.get("loc", []) if part not in ("body", "query", "path")]
+        field = ".".join(loc)
+        message = first.get("msg", "Input tidak valid")
+        detail = f"{field}: {message}" if field else message
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 snap = midtransclient.Snap(
     is_production=False,
